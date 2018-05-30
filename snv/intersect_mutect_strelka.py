@@ -116,9 +116,9 @@ def vcf2SNVPosition(vcf_file):
 def compare_snvs(vcf1, vcf2, sampleName):
     vcf1_variants = vcf2SNVPosition(vcf1)
     vcf2_variants = vcf2SNVPosition(vcf2)
-    in1only = sampleName + '_1-2.vcf'
-    in2only = sampleName + '_2-1.vcf'
-    inboth = sampleName + '_1n2.vcf'
+    in1only = sampleName + '_mutect_only.vcf'
+    in2only = sampleName + '_strelka_only.vcf'
+    inboth = sampleName + '_mns.vcf'
 
     
     os.system('bcftools view -h ' + vcf1 + ' > ' + in1only)

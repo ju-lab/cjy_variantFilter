@@ -21,16 +21,19 @@ def argument_parser():
 
     parser.add_argument('-o', '--outputDIR', required=False, default=os.getcwd())
     parser.add_argument('-m', '--mutect', required=True, help='Mutect VCF')
-    parser.add_argument('-n', '--normal_column', type=int, required=True, help='Tells whether normal column is written before cancer column. For example after the <FORMAT> column of vcf, if the order is <TUMOR> <NORMAL>, then --normal_column is 1. If <NORMAL> <TUMOR> then --normal_column is 0')
+    parser.add_argument('-s', '--sampleName', required=True, help='Sample name of tumor sample that is used in the header of VCF file. Usually identified from `@RG SM:` tag from BAM file')
+
+#    parser.add_argument('-n', '--normal_column', type=int, required=True, help='Tells whether normal column is written before cancer column. For example after the <FORMAT> column of vcf, if the order is <TUMOR> <NORMAL>, then --normal_column is 1. If <NORMAL> <TUMOR> then --normal_column is 0')
     parser.add_argument('-t', '--threshold', type=float, required=True, help ='Threshold to filter out those variants that has variant reads in normal Bam')
 
     args = vars(parser.parse_args())
 
     outputDIR = args['outputDIR']
     mutect = args['mutect']
-    normal_column = args['normal_column']
+#    normal_column = args['normal_column']
+    sampleName = args['sampleName']
     threshold = args['threshold']
-    return outputDIR, mutect, normal_column, threshold
+    return outputDIR, mutect, sampleName, threshold
 
 def filter_normal(mutect_vcf, output_dir,  normal_column, threshold=0.01):
     # nin filter = Not In Normal Filter 
@@ -52,8 +55,23 @@ def filter_normal(mutect_vcf, output_dir,  normal_column, threshold=0.01):
 
     return 0
 
+def identify_normal_column(mutect_vcf, sampleName):
+    """given a tumor sample name, and a mutect_VCF output, finds the index of column that is
+    used as normal"""
+    vcfHandle = cyvcf2.VCF(mutect_vcf)
+    try:
+        tumorIndex = vcfHandle.samples.index(sampleName)
+        if tumorIndex == 0:
+            return 1
+        else:
+            return 0
+    except ValueError:
+        print(f'{sampleName} is not present in {mutect_vcf}\nExiting...')
+        sys.exit()
+
 def main():
-    outputDIR, mutect_vcf, normal_column, threshold = argument_parser()
+    outputDIR, mutect_vcf, sampleName, threshold = argument_parser()
+    normal_column = identify_normal_column(mutect_vcf, sampleName)
     filter_normal(mutect_vcf, outputDIR,  normal_column, threshold)
     return 0
 
